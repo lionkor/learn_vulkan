@@ -13,4 +13,15 @@ int main() {
     glfwInit();
     glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
     GLFWwindow* window = glfwCreateWindow(800, 600, "vulkan window", nullptr, nullptr);
+    u32 extension_count = 0;
+    vkEnumerateInstanceExtensionProperties(nullptr, &extension_count, nullptr);
+    debug("extension count: " << extension_count);
+    glm::mat4 matrix;
+    glm::vec4 vec;
+    auto test = matrix * vec;
+    while (!glfwWindowShouldClose(window)) {
+        glfwPollEvents();
+    }
+    glfwDestroyWindow(window);
+    glfwTerminate();
 }
