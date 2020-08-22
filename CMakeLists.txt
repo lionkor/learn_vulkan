@@ -8,4 +8,4 @@ project(learn_vulkan)
 
 add_executable(learn_vulkan main.cpp)
 
-#target_link_libraries(${CMAKE_PROJECT_NAME} )
+target_link_libraries(${CMAKE_PROJECT_NAME} glfw vulkan)
