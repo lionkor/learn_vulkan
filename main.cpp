@@ -8,11 +8,24 @@
 #include <iostream>
 #include <stdexcept>
 #include <cstdlib>
+#include <vector>
+#include <cstring>
+
 #include "types.h"
 #include "debug.h"
 
 constexpr u32 WIDTH = 800;
 constexpr u32 HEIGHT = 600;
+
+const std::vector<const char*> validation_layers = {
+    "VK_LAYER_KHRONOS_validation"
+};
+
+#ifdef NDEBUG
+constexpr bool enable_validation_layers = false;
+#else
+constexpr bool enable_validation_layers = true;
+#endif
 
 class HelloTriangleApp
 {
@@ -32,6 +45,9 @@ private:
     }
 
     void create_instance() {
+        if (enable_validation_layers && !check_validation_layer_support()) {
+            throw std::runtime_error("requested validation layers not available");
+        }
         VkApplicationInfo app_info {};
         // optional data
         app_info.sType = VK_STRUCTURE_TYPE_APPLICATION_INFO;
@@ -52,7 +68,12 @@ private:
         create_info.enabledExtensionCount = glfw_extension_count;
         create_info.ppEnabledExtensionNames = glfw_extensions;
         // this is 0 for now, idk why
-        create_info.enabledLayerCount = 0;
+        if (enable_validation_layers) {
+            create_info.enabledLayerCount = static_cast<u32>(validation_layers.size());
+            create_info.ppEnabledLayerNames = validation_layers.data();
+        } else {
+            create_info.enabledLayerCount = 0;
+        }
 
         VkResult result = vkCreateInstance(&create_info, nullptr, &m_instance);
         if (result != VK_SUCCESS) {
@@ -72,6 +93,26 @@ private:
         glfwDestroyWindow(m_window);
         glfwTerminate();
         m_window = nullptr;
+    }
+
+    bool check_validation_layer_support() {
+        u32 layer_count;
+        vkEnumerateInstanceLayerProperties(&layer_count, nullptr);
+        std::vector<VkLayerProperties> available_layers(layer_count);
+        vkEnumerateInstanceLayerProperties(&layer_count, available_layers.data());
+        for (const char* layer_name : validation_layers) {
+            bool layer_found = false;
+            for (const auto& layer_properties : available_layers) {
+                if (std::strcmp(layer_name, layer_properties.layerName) == 0) {
+                    layer_found = true;
+                    break;
+                }
+            }
+            if (!layer_found) {
+                return false;
+            }
+        }
+        return true;
     }
 
 public:
