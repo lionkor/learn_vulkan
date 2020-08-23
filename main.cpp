@@ -31,9 +31,11 @@ constexpr bool enable_validation_layers = true;
 class HelloTriangleApp
 {
 private:
+    VkPhysicalDevice m_physical_device { VK_NULL_HANDLE };
     GLFWwindow* m_window { nullptr };
     VkInstance m_instance;
-    VkPhysicalDevice m_physical_device { VK_NULL_HANDLE };
+    VkDevice m_device;
+    VkQueue m_graphics_queue;
 
     void init_window() {
         glfwInit();
@@ -45,6 +47,30 @@ private:
     void init_vulkan() {
         create_instance();
         pick_physical_device();
+        create_logical_device();
+    }
+
+    void create_logical_device() {
+        QueueFamilyIndices indices = find_queue_families(m_physical_device);
+        VkDeviceQueueCreateInfo queue_create_info {};
+        queue_create_info.sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
+        queue_create_info.queueFamilyIndex = indices.graphics_family.value();
+        queue_create_info.queueCount = 1;
+        float queue_priority = 1.0f;
+        queue_create_info.pQueuePriorities = &queue_priority;
+
+        VkPhysicalDeviceFeatures device_features {}; // default means everything is VK_FALSE
+
+        VkDeviceCreateInfo create_info {};
+        create_info.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
+        create_info.pQueueCreateInfos = &queue_create_info;
+        create_info.queueCreateInfoCount = 1;
+        create_info.pEnabledFeatures = &device_features;
+
+        if (vkCreateDevice(m_physical_device, &create_info, nullptr, &m_device) != VK_SUCCESS) {
+            throw std::runtime_error("failed to create logical device");
+        }
+        vkGetDeviceQueue(m_device, indices.graphics_family.value(), 0, &m_graphics_queue);
     }
 
     void pick_physical_device() {
@@ -148,6 +174,7 @@ private:
     }
 
     void cleanup() {
+        vkDestroyDevice(m_device, nullptr);
         vkDestroyInstance(m_instance, nullptr);
 
         glfwDestroyWindow(m_window);
