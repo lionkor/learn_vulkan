@@ -1,6 +1,5 @@
 #!/bin/sh
 mkdir -p build
-echo "-> building..."
 cd build
 cmake ..
 cd ..
